@@ -1,0 +1,85 @@
+name: Build & Release Rust App
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: self-hosted
+            target: x86_64-unknown-linux-gnu
+            musl: false
+
+          - os: self-hosted
+            target: x86_64-unknown-linux-musl
+            musl: true
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            musl: false
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            musl: false
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VERSION: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install MUSL tools
+        if: matrix.os == 'self-hosted' && matrix.musl == true
+        run: |
+          sudo apt update
+          sudo apt install -y musl musl-tools musl-dev
+
+      - name: Build binary
+        run: |
+          if [ "${{ matrix.musl }}" = "true" ]; then
+            cargo build --release --target ${{ matrix.target }} --features openssl/vendored
+          else
+            cargo build --release --target ${{ matrix.target }}
+          fi
+
+      - name: Build archive
+        shell: bash
+        run: |
+          # Replace with your binary name
+          binary_name="emn"
+
+          dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
+          mkdir "$dirname"
+
+          # Move binary into folder
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname"
+          else
+            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname"
+          fi
+
+          # Archive
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            7z a "$dirname.zip" "$dirname"
+            echo "ASSET=$dirname.zip" >> $GITHUB_ENV
+          else
+            tar -czf "$dirname.tar.gz" "$dirname"
+            echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
+          fi
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ env.ASSET }}
