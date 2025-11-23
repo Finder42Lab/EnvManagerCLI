@@ -22,11 +22,11 @@ jobs:
             target: x86_64-unknown-linux-musl
             musl: true
 
-          - os: linux
+          - os: macos-latest
             target: x86_64-apple-darwin
             musl: false
 
-          - os: linux
+          - os: windows-latest
             target: x86_64-pc-windows-gnu
             musl: false
 
@@ -48,19 +48,21 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Install MUSL tools
-        if: matrix.os == 'self-hosted' && matrix.musl == true
+        if: matrix.musl == true
         run: |
           sudo apt update
           sudo apt install -y musl musl-tools musl-dev
 
+      - name: Install SSL tools
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt update
+          sudo apt install -y libssl-dev
+
       - name: Build binary
         shell: bash
         run: |
-          if [ "${{ matrix.musl }}" = "true" ]; then
-            cargo build --release --target ${{ matrix.target }} --features openssl/vendored
-          else
             cargo build --release --target ${{ matrix.target }}
-          fi
 
       - name: Build archive
         shell: bash
