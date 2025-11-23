@@ -18,16 +18,16 @@ jobs:
             target: x86_64-unknown-linux-gnu
             musl: false
 
-          - os: Linux
+          - os: linux
             target: x86_64-unknown-linux-musl
             musl: true
 
-          - os: macos-latest
+          - os: default
             target: x86_64-apple-darwin
             musl: false
 
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
+          - os: default
+            target: x86_64-pc-windows-gnu
             musl: false
 
     runs-on: ${{ matrix.os }}
