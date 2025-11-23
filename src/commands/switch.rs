@@ -23,19 +23,19 @@ pub async fn switch_env(project_id: &str) {
     println!("{}", "Загружаю переменные".yellow());
     let variables = get_project_variables(project_id).await;
 
-    println!("{}", "Генерирую файл".yellow());
+    println!("{}", "Генерирую содержимое .env-файла".yellow());
 
     let env_content = construct_env_file(variables);
 
-    println!("{}", "Копирую старый файл".yellow());
-
     if let Ok(file) = fs::exists(".env") {
         if file {
+            println!("{}", "Делаю копию сущестыующего .env-файла".yellow());
+
             fs::rename(".env", ".env.backup").unwrap();
         }
     }
 
-    println!("{}", "Создаю новый файл".yellow());
+    println!("{}", "Создаю новый .env-файл".yellow());
 
     match fs::write(".env", env_content) {
         Ok(_) =>     println!("{}", "Файл .env успешно создан".green()),

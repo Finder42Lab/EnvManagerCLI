@@ -11,7 +11,7 @@ fn construct_by_groups(variables: Vec<&IVariable>) -> Vec<String> {
     }
 
     for var in grouped.values() {
-        lines.push(format!("# From {}", var[0].project.name));
+        lines.push(format!("\n# From {}", var[0].project.name));
 
         let var_lines = var
             .iter()
